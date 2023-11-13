@@ -5,15 +5,14 @@ pragma circom 2.1.5;
 include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/multiplexer.circom";
 
-include "bigint.circom";
-include "p256.circom";
-include "bigint_func.circom";
+include "./circom-pairing/circuits/bigint.circom";
+include "./circom-pairing/circuits/bigint_func.circom";
 include "ecdsa_func.circom";
 include "p256_func.circom";
 
 // keys are encoded as (x, y) pairs with each coordinate being
 // encoded with k registers of n bits each
-template ECDSAPrivToPub(n, k) {
+template ECDSAPrivToPub(n, k, powers) {
     var stride = 8;
     signal input privkey[k];
     signal output pubkey[2][k];
@@ -26,8 +25,10 @@ template ECDSAPrivToPub(n, k) {
 
     var num_strides = div_ceil(n * k, stride);
     // power[i][j] contains: [j * (1 << stride * i) * G] for 1 <= j < (1 << stride)
-    var powers[num_strides][2 ** stride][2][k];
-    powers = get_g_pow_stride8_table(n, k);
+    
+    // TODO: Ensure that powers can actually be passed as a template parameter
+    //var powers[num_strides][2 ** stride][2][k];
+    //powers = get_g_pow_stride8_table(n, k);
 
     // contains a dummy point G * 2 ** 255 to stand in when we are adding 0
     // this point is sometimes an input into AddUnequal, so it must be guaranteed
@@ -128,7 +129,9 @@ template ECDSAPrivToPub(n, k) {
 // encoded with k registers of n bits each
 // signature is (r, s)
 // Does not check that pubkey is valid
-template ECDSAVerifyNoPubkeyCheck(n, k) {
+
+// a,b,p,order are curve parameters
+template ECDSAVerifyNoPubkeyCheck(n, k, a, b, p, order, powers) {
     assert(k >= 2);
     assert(k <= 100);
 
@@ -139,8 +142,8 @@ template ECDSAVerifyNoPubkeyCheck(n, k) {
 
     signal output result;
 
-    var p[100] = get_p256_prime(n, k);
-    var order[100] = get_p256_order(n, k);
+    //var p[100] = get_p256_prime(n, k);
+    //var order[100] = get_p256_order(n, k);
 
     // compute multiplicative inverse of s mod n
     var sinv_comp[100] = mod_inv(n, k, s, order);
@@ -167,7 +170,7 @@ template ECDSAVerifyNoPubkeyCheck(n, k) {
     }
 
     // compute (h * sinv) mod n
-    component g_coeff = BigMultModP(n, k);
+    component g_coeff = BigMultModP(n, k); // FIXME This function is deprecated
     for (var idx = 0; idx < k; idx++) {
         g_coeff.a[idx] <== sinv[idx];
         g_coeff.b[idx] <== msghash[idx];
@@ -188,7 +191,7 @@ template ECDSAVerifyNoPubkeyCheck(n, k) {
         pubkey_coeff.p[idx] <== order[idx];
     }
 
-    // compute (r * sinv) * pubkey
+    compute (r * sinv) * pubkey
     component pubkey_mult = P256ScalarMult(n, k);
     for (var idx = 0; idx < k; idx++) {
         pubkey_mult.scalar[idx] <== pubkey_coeff.out[idx];
