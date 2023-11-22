@@ -11,7 +11,7 @@ Gx_255 = tmpGx
 Gy_255 = tmpGy
 
 return_str = ""
-for (n,k) in {(64,4), (86,3)}:
+for (n,k) in {(64,4), (86,3), (43, 6)}:
     return_str += "(n,k) = " + str((n,k)) + "\n"
     Gx_255_long = compute_p256_math.get_long(n, k, Gx_255)
     Gy_255_long = compute_p256_math.get_long(n, k, Gy_255)
