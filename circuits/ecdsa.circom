@@ -2,12 +2,12 @@
 
 pragma circom 2.1.5;
 
-include "../node_modules/circomlib/circuits/comparators.circom";
+//include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/multiplexer.circom";
 
-include "bigint.circom";
-include "p256.circom";
-include "bigint_func.circom";
+include "circom-pairing/circuits/curve.circom";
+include "circom-pairing/circuits/bigint.circom";
+include "circom-pairing/circuits/bigint_func.circom";
 include "ecdsa_func.circom";
 include "p256_func.circom";
 
@@ -17,6 +17,12 @@ template ECDSAPrivToPub(n, k) {
     var stride = 8;
     signal input privkey[k];
     signal output pubkey[2][k];
+
+    var prime_ret[100] = get_p256_prime(n, k);
+    var prime[k];
+    for (var i = 0; i < k; i++) {
+        prime[i] = prime_ret[i];
+    }
 
     component n2b[k];
     for (var i = 0; i < k; i++) {
@@ -98,7 +104,7 @@ template ECDSAPrivToPub(n, k) {
     signal intermed1[num_strides - 1][2][k];
     signal intermed2[num_strides - 1][2][k];
     for (var i = 1; i < num_strides; i++) {
-        adders[i - 1] = P256AddUnequal(n, k);
+        adders[i - 1] = EllipticCurveAddUnequal(n, k, prime);
         for (var idx = 0; idx < k; idx++) {
             for (var l = 0; l < 2; l++) {
                 adders[i - 1].a[l][idx] <== partial[i - 1][l][idx];
@@ -189,7 +195,23 @@ template ECDSAVerifyNoPubkeyCheck(n, k) {
     }
 
     // compute (r * sinv) * pubkey
-    component pubkey_mult = P256ScalarMult(n, k);
+
+
+    // TODO: Need to look at how this cane be done. The above computations of the coefficients for scalar multiplication
+    // are using a depreceated BigMultModP, and additionally the circom-pairing scalar multiply takes in the scalar as
+    // simply a function parameter, so it can only be [0, 2^250)
+
+    var a_ret[100] = get_A(n, k);
+    var b_ret[100] = get_B(n, k);
+    var a[k];
+    var b[k];    
+    for (var i = 0; i < k; i++) {
+        a[i] = a_ret[i];
+        b[i] = b_ret[i];
+    }
+
+    // component pubkey_mult = EllipticCurveScalarMultiply(n, k, );
+    component pubkey_mult = P256ScalarMult(n, k, a, b, p);
     for (var idx = 0; idx < k; idx++) {
         pubkey_mult.scalar[idx] <== pubkey_coeff.out[idx];
         pubkey_mult.point[0][idx] <== pubkey[0][idx];
@@ -197,7 +219,7 @@ template ECDSAVerifyNoPubkeyCheck(n, k) {
     }
 
     // compute (h * sinv) * G + (r * sinv) * pubkey
-    component sum_res = P256AddUnequal(n, k);
+    component sum_res = EllipticCurveAddUnequal(n, k, p);
     for (var idx = 0; idx < k; idx++) {
         sum_res.a[0][idx] <== g_mult.pubkey[0][idx];
         sum_res.a[1][idx] <== g_mult.pubkey[1][idx];
@@ -239,4 +261,85 @@ template ECDSAExtendedVerify(n, k) {
     signal input msghash[k];
 
     signal output result;
+}
+
+function div_ceil(m, n) {
+    var ret = 0;
+    if (m % n == 0) {
+        ret = m \ n;
+    } else {
+        ret = m \ n + 1;
+    }
+    return ret;
+}
+
+template P256ScalarMult(n, k, a, b, prime) {
+    signal input scalar[k];
+    signal input point[2][k];
+
+    signal output out[2][k];
+
+    component n2b[k];
+    for (var i = 0; i < k; i++) {
+        n2b[i] = Num2Bits(n);
+        n2b[i].in <== scalar[i];
+    }
+
+    // has_prev_non_zero[n * i + j] == 1 if there is a nonzero bit in location [i][j] or higher order bit
+    component has_prev_non_zero[k * n];
+    for (var i = k - 1; i >= 0; i--) {
+        for (var j = n - 1; j >= 0; j--) {
+            has_prev_non_zero[n * i + j] = OR();
+            if (i == k - 1 && j == n - 1) {
+                has_prev_non_zero[n * i + j].a <== 0;
+                has_prev_non_zero[n * i + j].b <== n2b[i].out[j];
+            } else {
+                has_prev_non_zero[n * i + j].a <== has_prev_non_zero[n * i + j + 1].out;
+                has_prev_non_zero[n * i + j].b <== n2b[i].out[j];
+            }
+        }
+    }
+
+    signal partial[n * k][2][k];
+    signal intermed[n * k - 1][2][k];
+    component adders[n * k - 1];
+    component doublers[n * k - 1];
+    for (var i = k - 1; i >= 0; i--) {
+        for (var j = n - 1; j >= 0; j--) {
+            if (i == k - 1 && j == n - 1) {
+                for (var idx = 0; idx < k; idx++) {
+                    partial[n * i + j][0][idx] <== point[0][idx];
+                    partial[n * i + j][1][idx] <== point[1][idx];
+                }
+            }
+            if (i < k - 1 || j < n - 1) {
+                adders[n * i + j] = EllipticCurveAddUnequal(n, k, prime);
+                doublers[n * i + j] = EllipticCurveDouble(n, k, a, b, prime);
+                for (var idx = 0; idx < k; idx++) {
+                    doublers[n * i + j].in[0][idx] <== partial[n * i + j + 1][0][idx];
+                    doublers[n * i + j].in[1][idx] <== partial[n * i + j + 1][1][idx];
+                }
+                for (var idx = 0; idx < k; idx++) {
+                    adders[n * i + j].a[0][idx] <== doublers[n * i + j].out[0][idx];
+                    adders[n * i + j].a[1][idx] <== doublers[n * i + j].out[1][idx];
+                    adders[n * i + j].b[0][idx] <== point[0][idx];
+                    adders[n * i + j].b[1][idx] <== point[1][idx];
+                }
+                // partial[n * i + j]
+                // = has_prev_non_zero[n * i + j + 1] * ((1 - n2b[i].out[j]) * doublers[n * i + j] + n2b[i].out[j] * adders[n * i + j])
+                //   + (1 - has_prev_non_zero[n * i + j + 1]) * point
+                for (var idx = 0; idx < k; idx++) {
+                    intermed[n * i + j][0][idx] <== n2b[i].out[j] * (adders[n * i + j].out[0][idx] - doublers[n * i + j].out[0][idx]) + doublers[n * i + j].out[0][idx];
+                    intermed[n * i + j][1][idx] <== n2b[i].out[j] * (adders[n * i + j].out[1][idx] - doublers[n * i + j].out[1][idx]) + doublers[n * i + j].out[1][idx];
+                    partial[n * i + j][0][idx] <== has_prev_non_zero[n * i + j + 1].out * (intermed[n * i + j][0][idx] - point[0][idx]) + point[0][idx];
+                    partial[n * i + j][1][idx] <== has_prev_non_zero[n * i + j + 1].out * (intermed[n * i + j][1][idx] - point[1][idx]) + point[1][idx];
+                }
+            }
+        }
+    }
+
+    for (var idx = 0; idx < k; idx++) {
+        out[0][idx] <== partial[0][0][idx];
+        out[1][idx] <== partial[0][1][idx];
+    }
 }

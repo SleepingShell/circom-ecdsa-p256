@@ -96,7 +96,7 @@ function get_B(n,k) {
 
 //done
 function get_p256_prime(n, k) {
-     assert((n == 86 && k == 3) || (n == 64 && k == 4) || (n == 32 && k == 8));
+     assert((n == 86 && k == 3) || (n == 64 && k == 4) || (n == 32 && k == 8) || (n == 43 && k == 6));
     
     // done
     var ret[100];
@@ -215,105 +215,105 @@ function get_dummy_point(n, k) {
 // out[1] = lamb * (a[0] - out[0]) - a[1] % p 
 
 // done
-function p256_addunequal_func(n, k, x1, y1, x2, y2){
-    var a[2][100];
-    var b[2][100];
+// function p256_addunequal_func(n, k, x1, y1, x2, y2){
+//     var a[2][100];
+//     var b[2][100];
 
-    for(var i = 0; i < k; i++){
-        a[0][i] = x1[i];
-        a[1][i] = y1[i];
-        b[0][i] = x2[i];
-        b[1][i] = y2[i];
-    }
+//     for(var i = 0; i < k; i++){
+//         a[0][i] = x1[i];
+//         a[1][i] = y1[i];
+//         b[0][i] = x2[i];
+//         b[1][i] = y2[i];
+//     }
 
-    var out[2][100];
+//     var out[2][100];
 
-    var p[100] = get_p256_prime(n, k);
+//     var p[100] = get_p256_prime(n, k);
 
-    // b[1] - a[1]
-    var sub1_out[100] = long_sub_mod_p(n, k, b[1], a[1], p);
+//     // b[1] - a[1]
+//     var sub1_out[100] = long_sub_mod_p(n, k, b[1], a[1], p);
 
-    // b[0] - a[0]
-    var sub0_out[100]= long_sub_mod_p(n, k, b[0], a[0], p);
+//     // b[0] - a[0]
+//     var sub0_out[100]= long_sub_mod_p(n, k, b[0], a[0], p);
 
-    // lambda = (b[1] - a[1]) * inv(b[0] - a[0])
-    var sub0inv[100] = mod_inv(n, k, sub0_out, p);
-    var lambda[100] = prod_mod_p(n, k, sub1_out, sub0inv, p);
+//     // lambda = (b[1] - a[1]) * inv(b[0] - a[0])
+//     var sub0inv[100] = mod_inv(n, k, sub0_out, p);
+//     var lambda[100] = prod_mod_p(n, k, sub1_out, sub0inv, p);
 
-    // out[0] = lambda ** 2 - a[0] - b[0]
-    var lambdasq_out[100] = prod_mod_p(n, k, lambda, lambda, p);
-    var out0_pre_out[100] = long_sub_mod_p(n, k, lambdasq_out, a[0], p);
-    var out0_out[100] = long_sub_mod_p(n, k, out0_pre_out, b[0], p);
-    for (var i = 0; i < k; i++) {
-        out[0][i] = out0_out[i];
-    }
+//     // out[0] = lambda ** 2 - a[0] - b[0]
+//     var lambdasq_out[100] = prod_mod_p(n, k, lambda, lambda, p);
+//     var out0_pre_out[100] = long_sub_mod_p(n, k, lambdasq_out, a[0], p);
+//     var out0_out[100] = long_sub_mod_p(n, k, out0_pre_out, b[0], p);
+//     for (var i = 0; i < k; i++) {
+//         out[0][i] = out0_out[i];
+//     }
 
-    // out[1] = lambda * (a[0] - out[0]) - a[1]
-    var out1_0_out[100] = long_sub_mod_p(n, k, a[0], out[0], p);
-    var out1_1_out[100] = prod_mod_p(n, k, lambda, out1_0_out, p);
-    var out1_out[100] = long_sub_mod_p(n, k, out1_1_out, a[1], p);
-    for (var i = 0; i < k; i++) {
-        out[1][i] = out1_out[i];
-    }
+//     // out[1] = lambda * (a[0] - out[0]) - a[1]
+//     var out1_0_out[100] = long_sub_mod_p(n, k, a[0], out[0], p);
+//     var out1_1_out[100] = prod_mod_p(n, k, lambda, out1_0_out, p);
+//     var out1_out[100] = long_sub_mod_p(n, k, out1_1_out, a[1], p);
+//     for (var i = 0; i < k; i++) {
+//         out[1][i] = out1_out[i];
+//     }
 
-    return out;
-}
+//     return out;
+// }
 
-// a[0], a[1] = x1, y1
-// lamb = (3 * a[0] ** 2) / (2 * a[1]) % p
-// out[0] = lamb ** 2 - (2 * a[0]) % p
-// out[1] = lamb * (a[0] - out[0]) - a[1] % p
+// // a[0], a[1] = x1, y1
+// // lamb = (3 * a[0] ** 2) / (2 * a[1]) % p
+// // out[0] = lamb ** 2 - (2 * a[0]) % p
+// // out[1] = lamb * (a[0] - out[0]) - a[1] % p
 
 
-// done
-function p256_double_func(n, k, x1, y1){
-    var a[2][100];
-    var b[2][100];
+// // done
+// function p256_double_func(n, k, x1, y1){
+//     var a[2][100];
+//     var b[2][100];
 
-    for(var i = 0; i < k; i++){
-        a[0][i] = x1[i];
-        a[1][i] = y1[i];
-    }
+//     for(var i = 0; i < k; i++){
+//         a[0][i] = x1[i];
+//         a[1][i] = y1[i];
+//     }
 
-    var out[2][100];
+//     var out[2][100];
 
-    var p[100] = get_p256_prime(n, k);
+//     var p[100] = get_p256_prime(n, k);
 
-    // lamb_numer = 3 * a[0] ** 2 + A
-    var x1_sq[100] = prod_mod_p(n, k, a[0], a[0], p);
-    var A[100] = get_A(n, k);
-    var three[100];
-    for (var i = 0; i < 100; i++) three[i] = i == 0 ? 3 : 0;
+//     // lamb_numer = 3 * a[0] ** 2 + A
+//     var x1_sq[100] = prod_mod_p(n, k, a[0], a[0], p);
+//     var A[100] = get_A(n, k);
+//     var three[100];
+//     for (var i = 0; i < 100; i++) three[i] = i == 0 ? 3 : 0;
 
-    var lamb_numer[100] = prod_mod_p(n, k, x1_sq, three, p); // 3 * a[0] ** 2
-    for (var i = 0; i < 100; i++) { // + A
-        lamb_numer[i] += A[i];
-    }
+//     var lamb_numer[100] = prod_mod_p(n, k, x1_sq, three, p); // 3 * a[0] ** 2
+//     for (var i = 0; i < 100; i++) { // + A
+//         lamb_numer[i] += A[i];
+//     }
 
-    // lamb_denom = 2 * a[1]
-    var two[100];
-    for (var i = 0; i < 100; i++) two[i] = i == 0 ? 2 : 0;
-    var lamb_denom[100] = prod_mod_p(n, k, a[1], two, p);
+//     // lamb_denom = 2 * a[1]
+//     var two[100];
+//     for (var i = 0; i < 100; i++) two[i] = i == 0 ? 2 : 0;
+//     var lamb_denom[100] = prod_mod_p(n, k, a[1], two, p);
 
-    // lambda = lamb_numer * inv(lamb_denom)
-    var lamb_denom_inv[100] = mod_inv(n, k, lamb_denom, p);
-    var lambda[100] = prod_mod_p(n, k, lamb_numer, lamb_denom_inv, p);
+//     // lambda = lamb_numer * inv(lamb_denom)
+//     var lamb_denom_inv[100] = mod_inv(n, k, lamb_denom, p);
+//     var lambda[100] = prod_mod_p(n, k, lamb_numer, lamb_denom_inv, p);
 
-    // out[0] = lambda ** 2 - 2 * a[0]
-    var lambdasq_out[100] = prod_mod_p(n, k, lambda, lambda, p);
-    var out0_pre_out[100] = long_sub_mod_p(n, k, lambdasq_out, a[0], p);
-    var out0_out[100] = long_sub_mod_p(n, k, out0_pre_out, a[0], p);
-    for (var i = 0; i < k; i++) {
-        out[0][i] = out0_out[i];
-    }
+//     // out[0] = lambda ** 2 - 2 * a[0]
+//     var lambdasq_out[100] = prod_mod_p(n, k, lambda, lambda, p);
+//     var out0_pre_out[100] = long_sub_mod_p(n, k, lambdasq_out, a[0], p);
+//     var out0_out[100] = long_sub_mod_p(n, k, out0_pre_out, a[0], p);
+//     for (var i = 0; i < k; i++) {
+//         out[0][i] = out0_out[i];
+//     }
 
-    // out[1] = lambda * (a[0] - out[0]) - a[1]
-    var out1_0_out[100] = long_sub_mod_p(n, k, a[0], out[0], p);
-    var out1_1_out[100] = prod_mod_p(n, k, lambda, out1_0_out, p);
-    var out1_out[100] = long_sub_mod_p(n, k, out1_1_out, a[1], p);
-    for (var i = 0; i < k; i++) {
-        out[1][i] = out1_out[i];
-    }
+//     // out[1] = lambda * (a[0] - out[0]) - a[1]
+//     var out1_0_out[100] = long_sub_mod_p(n, k, a[0], out[0], p);
+//     var out1_1_out[100] = prod_mod_p(n, k, lambda, out1_0_out, p);
+//     var out1_out[100] = long_sub_mod_p(n, k, out1_1_out, a[1], p);
+//     for (var i = 0; i < k; i++) {
+//         out[1][i] = out1_out[i];
+//     }
 
-    return out;
-}
+//     return out;
+// }
