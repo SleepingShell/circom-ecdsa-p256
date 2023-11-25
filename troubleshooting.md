@@ -8,3 +8,6 @@ When adopting the ECC addition to P-256, there seems to be issues surrounding us
 - If we simply replace `getProperRepresentation` with `PrimeReduce` in `CheckCubicModPIsZero`, this does not work as some of the registers of both the input and the reduction step have values > 2^250.
 - `EllipticCurveScalarMultiply` only works with scalar values in [0, 2^250), but the scalars used in ecdsa are taken mod the order, which is > 2^250
 - When using a modified version of `P256ScalarMult` (instead of using `EllipticCurveScalarMultiply`), `EllipticCurveDouble` requires that a < 2^n, but P256 a is 256 bits (greater than circom field size)
+
+# Notes from meeting
+- Try to modify ECCDouble to take in a as BigInt

@@ -31,7 +31,7 @@ function bigint_to_array(n: number, k: number, x: bigint) {
   return ret;
 }
 
-describe.only('P256AddUnequal', function () {
+describe('P256AddUnequal', function () {
   this.timeout(1000 * 1000);
 
   // runs circom compilation
@@ -284,7 +284,7 @@ describe('P256ScalarMult', function () {
 
 // TODO: change to p256 points
 // (gubsheep's note) TODO: figure out some way to test that if point is not on curve, pf gen should fail
-describe.only('P256PointOnCurve', function () {
+describe('P256PointOnCurve', function () {
   this.timeout(1000 * 1000);
 
   // runs circom compilation
