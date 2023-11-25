@@ -121,7 +121,6 @@ describe.only("Reduction", function () {
     let combined = p_8.map((v, i) => v+output[i]);
     console.log(evaluate(combined, 32n) % p );
     */
-
     // Given that both the reduced registers and reduced+multipleOfP are correctly 0 mod p,
     // this leads to the proper representation being the issue, as manually taking that mod p is not 0
 
@@ -132,6 +131,12 @@ describe.only("Reduction", function () {
     output = witness.slice(1,5);
     console.log(output);
     console.log(evaluate(output, 64n) % p);
+
+    // witness = await prime_reduce_circuit.calculateWitness({"in": output});
+    // output = witness.slice(1,9);
+    // console.log(output);
+    // console.log(evaluate(output, 64n) % p);
+
   });
 
   it('Test pairing add', async () => {

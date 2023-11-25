@@ -39,7 +39,7 @@ pragma circom 2.1.5;
 //done
 // returns n-bit k-register representation of A coefficient in P256 elliptic curve
 function get_A(n, k) {
-    assert((n == 86 && k == 3) || (n == 64 && k == 4));
+    assert((n == 86 && k == 3) || (n == 64 && k == 4) || (n == 43 && k ==6));
     var ret[100];
     if (n == 86 && k == 3) {
         ret[0] = 77371252455336267181195260;
@@ -67,7 +67,7 @@ function get_A(n, k) {
 
 //done
 function get_B(n,k) {
-    assert((n == 86 && k == 3) || (n == 64 && k == 4));
+    assert((n == 86 && k == 3) || (n == 64 && k == 4) || (n == 43 && k ==6));
     var ret[100];
     if (n == 86 && k == 3) {
         ret[0] = 23805269282153275520606283;
@@ -138,7 +138,7 @@ function get_p256_prime(n, k) {
 
 //done 
 function get_p256_order(n, k) {
-    assert((n == 86 && k == 3) || (n == 64 && k == 4));
+    assert((n == 86 && k == 3) || (n == 64 && k == 4) || (n == 43 && k ==6));
     var ret[100];
 
     //done
